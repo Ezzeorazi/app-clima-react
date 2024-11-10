@@ -1,10 +1,11 @@
-import { LoadingButton } from "@mui/lab";
-import { Box, Container, TextField, Typography } from "@mui/material";
 import { useState } from "react";
+import { Container, Typography, Box } from "@mui/material";
+import CityForm from "./components/CityForm";
+import WeatherInfo from "./components/WeatherInfo";
+import Forecast from "./components/Forecast";
 
-const API_WEATHER = `https://api.weatherapi.com/v1/current.json?key=${
-  import.meta.env.VITE_API_KEY
-}&q=`;
+// API base URL
+const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_API_KEY}&q=`;
 
 export default function App() {
   const [city, setCity] = useState("");
@@ -20,18 +21,23 @@ export default function App() {
     condition: "",
     icon: "",
     conditionText: "",
+    humidity: 0,
+    wind_kph: 0,
+    feelslike_c: 0,
   });
+  const [forecast, setForecast] = useState([]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError({
       error: false,
-      message: error.message,
+      message: "",
     });
     try {
       if (!city.trim()) throw { message: "El campo es obligatorio" };
-      const response = await fetch(API_WEATHER + city);
+      
+      const response = await fetch(API_WEATHER + city + "&days=7"); // Fetch 7 days forecast
       const data = await response.json();
 
       if (data.error) throw { message: data.error.message };
@@ -43,7 +49,13 @@ export default function App() {
         condition: data.current.condition.code,
         icon: data.current.condition.icon,
         conditionText: data.current.condition.text,
+        humidity: data.current.humidity,
+        wind_kph: data.current.wind_kph,
+        feelslike_c: data.current.feelslike_c,
       });
+
+      // Pronóstico extendido
+      setForecast(data.forecast.forecastday);
     } catch (error) {
       setError({
         error: true,
@@ -55,71 +67,24 @@ export default function App() {
   };
 
   return (
-    <>
-      <Container maxWidth="xs" sx={{ mt: 2 }}>
-        <Typography variant="h3" component="h1" align="center" gutterBottom>
-          App del clima
-        </Typography>
-        <Box
-          sx={{ display: "grid", gap: 2 }}
-          component="form"
-          autoComplete="off"
-          onSubmit={onSubmit}
-        >
-          <TextField
-            id="city"
-            label="Ciudad"
-            variant="outlined"
-            size="small"
-            required
-            fullWidth
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            error={error.error}
-            helperText={error.message}
-          />
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={loading}
-            loadingIndicator="Cargando..."
-          >
-            Buscar
-          </LoadingButton>
-        </Box>
-        {weather.city && (
-          <Box
-            sx={{
-              mt: 2,
-              display: "grid",
-              gap: 2,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h4" component="h2">
-              {weather.city}, {weather.country}
-            </Typography>
-            <Box
-              component="img"
-              alt={weather.conditionText}
-              src={weather.icon}
-              sx={{ margin: "0 auto" }}
-            />
-            <Typography variant="h5" component="h3">
-              {weather.temp} ºC
-            </Typography>
-            <Typography variant="h6" component="h4">
-              {weather.conditionText}
-            </Typography>
-          </Box>
-        )}
-        <Typography textAlign="center" sv={{ mt: 2, fontSize: "10px" }}>
-          Powered by:{" "}
-          <a href="https://www.weatherapi.com/" title="Weather API">
-            WeatherAPI.com
-          </a>
-        </Typography>
-      </Container>
-    </>
+    <Container maxWidth="xs" sx={{ mt: 2 }}>
+      <Typography variant="h3" component="h1" align="center" gutterBottom>
+        App del clima
+      </Typography>
+
+      <CityForm
+        city={city}
+        setCity={setCity}
+        onSubmit={onSubmit}
+        loading={loading}
+        error={error}
+      />
+
+      {/* Información del clima actual */}
+      {weather.city && <WeatherInfo weather={weather} />}
+
+      {/* Pronóstico extendido */}
+      {forecast.length > 0 && <Forecast forecast={forecast} />}
+    </Container>
   );
 }
