@@ -53,7 +53,6 @@ export default function App() {
       setLoading(false);
     }
   };
-  console.log("API Key:", import.meta.env.VITE_API_KEY);
 
   return (
     <>
