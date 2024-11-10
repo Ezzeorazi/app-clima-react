@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Container, Typography, Box } from "@mui/material";
 import CityForm from "./components/CityForm";
 import WeatherInfo from "./components/WeatherInfo";
 import Forecast from "./components/Forecast";
+import RecentSearches from "./components/RecentSearches"; // Importamos el componente
 
 // API base URL
-const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_API_KEY}&q=`;
+const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${
+  import.meta.env.VITE_API_KEY
+}&q=`;
 
 export default function App() {
   const [city, setCity] = useState("");
@@ -26,6 +29,14 @@ export default function App() {
     feelslike_c: 0,
   });
   const [forecast, setForecast] = useState([]);
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  // Cargar las últimas 3 búsquedas desde localStorage
+  useEffect(() => {
+    const storedSearches =
+      JSON.parse(localStorage.getItem("recentSearches")) || [];
+    setRecentSearches(storedSearches);
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +47,7 @@ export default function App() {
     });
     try {
       if (!city.trim()) throw { message: "El campo es obligatorio" };
-      
+
       const response = await fetch(API_WEATHER + city + "&days=7"); // Fetch 7 days forecast
       const data = await response.json();
 
@@ -56,6 +67,14 @@ export default function App() {
 
       // Pronóstico extendido
       setForecast(data.forecast.forecastday);
+
+      // Guardar las últimas 3 búsquedas en localStorage
+      const updatedSearches = [
+        city,
+        ...recentSearches.filter((item) => item !== city),
+      ].slice(0, 3);
+      setRecentSearches(updatedSearches);
+      localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
     } catch (error) {
       setError({
         error: true,
@@ -64,6 +83,12 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para manejar clic en una ciudad de las búsquedas recientes
+  const onSearchCity = (city) => {
+    setCity(city); // Actualizamos la ciudad seleccionada
+    onSubmit({ preventDefault: () => {} }); // Realizamos la búsqueda inmediatamente
   };
 
   return (
@@ -85,6 +110,19 @@ export default function App() {
 
       {/* Pronóstico extendido */}
       {forecast.length > 0 && <Forecast forecast={forecast} />}
+
+      {/* Mostrar las últimas 3 búsquedas */}
+      <RecentSearches
+        recentSearches={recentSearches}
+        onSearchCity={onSearchCity}
+      />
+
+      {/* Footer con el mensaje de copyright */}
+      <Box sx={{ mt: 3, textAlign: "center", fontSize: "14px", color: "#888" }}>
+        <Typography variant="body2" component="p">
+          © 2024 Ezequiel Orazi. Todos los derechos reservados.
+        </Typography>
+      </Box>
     </Container>
   );
 }
