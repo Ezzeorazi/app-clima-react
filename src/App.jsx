@@ -38,7 +38,7 @@ export default function App() {
 
       setWeather({
         city: data.location.name,
-        country: data.location.cuntry,
+        country: data.location.country,
         temp: data.current.temp_c,
         condition: data.current.condition.code,
         icon: data.current.condition.icon,
@@ -53,12 +53,13 @@ export default function App() {
       setLoading(false);
     }
   };
+  console.log("API Key:", import.meta.env.VITE_API_KEY);
 
   return (
     <>
       <Container maxWidth="xs" sx={{ mt: 2 }}>
         <Typography variant="h3" component="h1" align="center" gutterBottom>
-          Weather App
+          App del clima
         </Typography>
         <Box
           sx={{ display: "grid", gap: 2 }}
@@ -88,30 +89,30 @@ export default function App() {
           </LoadingButton>
         </Box>
         {weather.city && (
-        <Box
-          sx={{
-            mt: 2,
-            display: "grid",
-            gap: 2,
-            textAlign: "center",
-          }}
-        >
-          <Typography variant="h4" component="h2">
-            {weather.city}, {weather.country}
-          </Typography>
           <Box
-            component="img"
-            alt={weather.conditionText}
-            src={weather.icon}
-            sx={{ margin: "0 auto" }}
-          />
-          <Typography variant="h5" component="h3">
-            {weather.temp} ºC
-          </Typography>
-          <Typography variant="h6" component="h4">
-            {weather.conditionText}
-          </Typography>
-        </Box>
+            sx={{
+              mt: 2,
+              display: "grid",
+              gap: 2,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="h4" component="h2">
+              {weather.city}, {weather.country}
+            </Typography>
+            <Box
+              component="img"
+              alt={weather.conditionText}
+              src={weather.icon}
+              sx={{ margin: "0 auto" }}
+            />
+            <Typography variant="h5" component="h3">
+              {weather.temp} ºC
+            </Typography>
+            <Typography variant="h6" component="h4">
+              {weather.conditionText}
+            </Typography>
+          </Box>
         )}
         <Typography textAlign="center" sv={{ mt: 2, fontSize: "10px" }}>
           Powered by:{" "}
