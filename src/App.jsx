@@ -33,10 +33,14 @@ export default function App() {
 
   // Cargar las últimas 3 búsquedas desde localStorage
   useEffect(() => {
-    const storedSearches =
-      JSON.parse(localStorage.getItem("recentSearches")) || [];
+  const syncSearches = () => {
+    const storedSearches = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(storedSearches);
-  }, []);
+  };
+  window.addEventListener("storage", syncSearches);
+  return () => window.removeEventListener("storage", syncSearches);
+}, []);
+
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +55,10 @@ export default function App() {
       const response = await fetch(API_WEATHER + city + "&days=7"); // Fetch 7 days forecast
       const data = await response.json();
 
-      if (data.error) throw { message: data.error.message };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
 
       setWeather({
         city: data.location.name,
