@@ -2,6 +2,8 @@ import { Box, Typography } from "@mui/material";
 import { getWindDirectionInSpanish } from "../utils/getWindDirectionInSpanish";
 
 export default function WeatherInfo({ weather }) {
+  const windDirection = getWindDirectionInSpanish(weather.wind_dir);
+
   return (
     <Box sx={{ mt: 2, display: "grid", gap: 2, textAlign: "center" }}>
       <Typography variant="h4" component="h2">
@@ -15,7 +17,9 @@ export default function WeatherInfo({ weather }) {
         {weather.conditionText}
       </Typography>
       <Typography>Humedad: {weather.humidity}%</Typography>
-      <Typography>Viento: {weather.wind_kph} km/h {getWindDirectionInSpanish(weather.wind_dir)}</Typography>
+      <Typography>
+        Viento: {weather.wind_kph} km/h {windDirection.icon} {windDirection.text}
+      </Typography>
       <Typography>Sensación térmica: {weather.feelslike_c} ºC</Typography>
     </Box>
   );

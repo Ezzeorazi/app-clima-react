@@ -24,6 +24,7 @@ export default function App() {
     conditionText: "",
     humidity: 0,
     wind_kph: 0,
+    wind_dir: "", // Asegúrate de incluir wind_dir
     feelslike_c: 0,
   });
   const [forecast, setForecast] = useState({ hourly: [], daily: [] });
@@ -65,6 +66,7 @@ export default function App() {
         conditionText: data.current.condition.text, // Descripción en español
         humidity: data.current.humidity,
         wind_kph: data.current.wind_kph,
+        wind_dir: data.current.wind_dir, // Asegúrate de incluir wind_dir
         feelslike_c: data.current.feelslike_c,
       });
 

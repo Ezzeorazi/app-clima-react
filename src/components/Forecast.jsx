@@ -19,42 +19,48 @@ export default function Forecast({ forecast }) {
   return (
     <Box sx={{ display: "grid", gap: 2, mt: 3 }}>
       <Typography variant="h6" component="h4">Previsión del viento para las próximas 12 horas</Typography>
-      {next12Hours.map((hour, index) => (
-        <Card key={index} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
-          <CardContent>
-            <Typography variant="body2">
-              {new Date(hour.time).toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
-            </Typography>
-            <Typography>
-              Viento: {hour.wind_kph} km/h {getWindDirectionInSpanish(hour.wind_dir)}
-            </Typography>
-            <Typography>
-              Condición: {hour.conditionText}
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
+      {next12Hours.map((hour, index) => {
+        const windDirection = getWindDirectionInSpanish(hour.wind_dir);
+        return (
+          <Card key={index} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
+            <CardContent>
+              <Typography variant="body2">
+                {new Date(hour.time).toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
+              </Typography>
+              <Typography>
+                Viento: {hour.wind_kph} km/h {windDirection.icon} {windDirection.text}
+              </Typography>
+              <Typography>
+                Condición: {hour.conditionText}
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       <Typography variant="h6" component="h4" sx={{ mt: 4 }}>Clima con viento para los próximos 7 días</Typography>
-      {forecast.daily.map((day) => (
-        <Card key={day.date} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
-          <CardContent>
-            <Typography variant="body2">
-              {getDayAndDate(day.date)}
-            </Typography>
-            <img src={day.day.condition.icon} alt={day.day.condition.text} />
-            <Typography>
-              Máx: {day.day.maxtemp_c} ºC
-            </Typography>
-            <Typography>
-              Viento: {day.day.maxwind_kph} km/h {getWindDirectionInSpanish(day.day.wind_dir)}
-            </Typography>
-            <Typography>
-              Condición: {day.day.conditionText}
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
+      {forecast.daily.map((day) => {
+        const windDirection = getWindDirectionInSpanish(day.day.wind_dir);
+        return (
+          <Card key={day.date} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
+            <CardContent>
+              <Typography variant="body2">
+                {getDayAndDate(day.date)}
+              </Typography>
+              <img src={day.day.condition.icon} alt={day.day.condition.text} />
+              <Typography>
+                Máx: {day.day.maxtemp_c} ºC
+              </Typography>
+              <Typography>
+                Viento: {day.day.maxwind_kph} km/h {windDirection.icon} {windDirection.text}
+              </Typography>
+              <Typography>
+                Condición: {day.day.conditionText}
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      })}
     </Box>
   );
 }
