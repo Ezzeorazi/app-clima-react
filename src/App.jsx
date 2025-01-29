@@ -6,12 +6,10 @@ import Forecast from "./components/Forecast";
 import RecentSearches from "./components/RecentSearches"; // Importamos el componente
 
 // API base URL
-const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${
-  import.meta.env.VITE_API_KEY
-}&q=`;
+const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_API_KEY}&q=`;
 
 export default function App() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Rosario");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({
     error: false,
@@ -28,19 +26,18 @@ export default function App() {
     wind_kph: 0,
     feelslike_c: 0,
   });
-  const [forecast, setForecast] = useState([]);
+  const [forecast, setForecast] = useState({ hourly: [], daily: [] });
   const [recentSearches, setRecentSearches] = useState([]);
 
   // Cargar las últimas 3 búsquedas desde localStorage
   useEffect(() => {
-  const syncSearches = () => {
-    const storedSearches = JSON.parse(localStorage.getItem("recentSearches")) || [];
-    setRecentSearches(storedSearches);
-  };
-  window.addEventListener("storage", syncSearches);
-  return () => window.removeEventListener("storage", syncSearches);
-}, []);
-
+    const syncSearches = () => {
+      const storedSearches = JSON.parse(localStorage.getItem("recentSearches")) || [];
+      setRecentSearches(storedSearches);
+    };
+    window.addEventListener("storage", syncSearches);
+    return () => window.removeEventListener("storage", syncSearches);
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -52,13 +49,12 @@ export default function App() {
     try {
       if (!city.trim()) throw { message: "El campo es obligatorio" };
 
-      const response = await fetch(API_WEATHER + city + "&days=7"); // Fetch 7 days forecast
+      const response = await fetch(`${API_WEATHER}${city}&lang=es&days=7`); // Fetch 7 days forecast
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-
 
       setWeather({
         city: data.location.name,
@@ -66,14 +62,32 @@ export default function App() {
         temp: data.current.temp_c,
         condition: data.current.condition.code,
         icon: data.current.condition.icon,
-        conditionText: data.current.condition.text,
+        conditionText: data.current.condition.text, // Descripción en español
         humidity: data.current.humidity,
         wind_kph: data.current.wind_kph,
         feelslike_c: data.current.feelslike_c,
       });
 
       // Pronóstico extendido
-      setForecast(data.forecast.forecastday);
+      const hourlyForecast = data.forecast.forecastday[0].hour.map(hour => ({
+        time: hour.time,
+        wind_kph: hour.wind_kph,
+        wind_dir: hour.wind_dir,
+        conditionText: hour.condition.text, // Descripción en español
+      }));
+
+      const dailyForecast = data.forecast.forecastday.map(day => ({
+        date: day.date,
+        day: {
+          maxtemp_c: day.day.maxtemp_c,
+          condition: day.day.condition,
+          maxwind_kph: day.day.maxwind_kph,
+          wind_dir: day.day.wind_dir,
+          conditionText: day.day.condition.text, // Descripción en español
+        },
+      }));
+
+      setForecast({ hourly: hourlyForecast, daily: dailyForecast });
 
       // Guardar las últimas 3 búsquedas en localStorage
       const updatedSearches = [
@@ -116,7 +130,7 @@ export default function App() {
       {weather.city && <WeatherInfo weather={weather} />}
 
       {/* Pronóstico extendido */}
-      {forecast.length > 0 && <Forecast forecast={forecast} />}
+      {forecast.daily.length > 0 && <Forecast forecast={forecast} />}
 
       {/* Mostrar las últimas 3 búsquedas */}
       <RecentSearches
