@@ -18,7 +18,7 @@ export default function Forecast({ forecast }) {
 
   return (
     <Box sx={{ display: "grid", gap: 2, mt: 3 }}>
-      <Typography variant="h6" component="h4">Previsión del viento para las próximas 12 horas</Typography>
+      <Typography variant="h6" component="h4">Previsión del viento para las próximas horas</Typography>
       {next12Hours.map((hour, index) => {
         const windDirection = getWindDirectionInSpanish(hour.wind_dir);
         return (
@@ -38,7 +38,7 @@ export default function Forecast({ forecast }) {
         );
       })}
 
-      <Typography variant="h6" component="h4" sx={{ mt: 4 }}>Clima con viento para los próximos 7 días</Typography>
+      <Typography variant="h6" component="h4" sx={{ mt: 4 }}>Clima con viento para los próximos días</Typography>
       {forecast.daily.map((day) => {
         const windDirection = getWindDirectionInSpanish(day.day.wind_dir);
         return (
