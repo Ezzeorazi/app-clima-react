@@ -1,66 +1,149 @@
-import { Box, Card, CardContent, Typography } from "@mui/material";
-import { getWindDirectionInSpanish } from "../utils/getWindDirectionInSpanish";
+import { Box, Typography } from "@mui/material";
+import { glassCard } from "../utils/weatherTheme";
 
-export default function Forecast({ forecast }) {
-  // Función para obtener el nombre del día y la fecha
-  const getDayAndDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-    return date.toLocaleDateString("es-ES", options); // Formato: "Lunes, 10 de Noviembre de 2024"
+const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+function getDayName(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  return DAYS_ES[d.getDay()];
+}
+
+export default function Forecast({ forecast, theme }) {
+  const now = new Date();
+  const nextHourTs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0).getTime();
+
+  const hourly = forecast.hourly
+    .filter((h) => new Date(h.time).getTime() >= nextHourTs)
+    .slice(0, 12);
+
+  const daily = forecast.daily;
+
+  const sectionLabel = {
+    color: theme.textMuted,
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    mb: 1.5,
+    px: 0.5,
   };
 
-  // Obtener la siguiente hora completa
-  const now = new Date();
-  const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
-
-  // Filtrar las horas a partir de la siguiente hora completa
-  const next12Hours = forecast.hourly.filter(hour => new Date(hour.time) >= nextHour).slice(0, 12);
-
   return (
-    <Box sx={{ display: "grid", gap: 2, mt: 3 }}>
-      <Typography variant="h6" component="h4">Previsión del viento para las próximas horas</Typography>
-      {next12Hours.map((hour, index) => {
-        const windDirection = getWindDirectionInSpanish(hour.wind_dir);
-        return (
-          <Card key={index} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
-            <CardContent>
-              <Typography variant="body2">
-                {new Date(hour.time).toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' })}
+    <Box sx={{ mt: 4 }}>
+      {/* ── HOURLY ── */}
+      <Typography sx={sectionLabel}>Próximas horas</Typography>
+      <Box
+        sx={{
+          ...glassCard(theme),
+          p: 2,
+          mb: 3,
+          animation: "slideUp 0.7s cubic-bezier(0.4,0,0.2,1) both",
+          animationDelay: "0.1s",
+        }}
+      >
+        <Box
+          className="no-scrollbar"
+          sx={{ display: "flex", gap: 1.5, overflowX: "auto", pb: 0.5 }}
+        >
+          {hourly.map((h, i) => (
+            <Box
+              key={i}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.5,
+                minWidth: 64,
+                py: 1,
+                px: 0.5,
+                borderRadius: "14px",
+                background: i === 0 ? theme.accentBg : "transparent",
+                border: i === 0 ? `1px solid ${theme.glassBorder}` : "1px solid transparent",
+                transition: "background 0.2s",
+                cursor: "default",
+                flexShrink: 0,
+              }}
+            >
+              <Typography sx={{ color: theme.textMuted, fontSize: "0.7rem", fontWeight: 500 }}>
+                {new Date(h.time).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
               </Typography>
-              <Typography>
-                Viento: {hour.wind_kph} km/h {windDirection.icon} {windDirection.text}
+              <Box
+                component="img"
+                src={h.conditionIcon?.replace("//", "https://")}
+                alt={h.conditionText}
+                sx={{ width: 36, height: 36 }}
+              />
+              <Typography sx={{ color: theme.text, fontSize: "0.95rem", fontWeight: 600 }}>
+                {Math.round(h.temp_c)}°
               </Typography>
-              <Typography>
-                Condición: {hour.conditionText}
+              <Typography sx={{ color: theme.textMuted, fontSize: "0.65rem", textAlign: "center", lineHeight: 1.2 }}>
+                {Math.round(h.wind_kph)} km/h
               </Typography>
-            </CardContent>
-          </Card>
-        );
-      })}
+            </Box>
+          ))}
+        </Box>
+      </Box>
 
-      <Typography variant="h6" component="h4" sx={{ mt: 4 }}>Clima con viento para los próximos días</Typography>
-      {forecast.daily.map((day) => {
-        const windDirection = getWindDirectionInSpanish(day.day.wind_dir);
-        return (
-          <Card key={day.date} sx={{ display: "flex", justifyContent: "center", textAlign: "center" }}>
-            <CardContent>
-              <Typography variant="body2">
-                {getDayAndDate(day.date)}
+      {/* ── DAILY ── */}
+      <Typography sx={sectionLabel}>Próximos 7 días</Typography>
+      <Box
+        sx={{
+          ...glassCard(theme),
+          overflow: "hidden",
+          animation: "slideUp 0.7s cubic-bezier(0.4,0,0.2,1) both",
+          animationDelay: "0.2s",
+        }}
+      >
+        {daily.map((day, i) => (
+          <Box
+            key={day.date}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              px: 2.5,
+              py: 1.6,
+              borderBottom: i < daily.length - 1 ? `1px solid ${theme.divider}` : "none",
+              "&:hover": { background: theme.accentBg },
+              transition: "background 0.15s",
+            }}
+          >
+            <Typography
+              sx={{ color: theme.text, fontSize: "0.92rem", fontWeight: 500, width: 40, flexShrink: 0 }}
+            >
+              {i === 0 ? "Hoy" : getDayName(day.date)}
+            </Typography>
+
+            <Box
+              component="img"
+              src={day.day.condition.icon?.replace("//", "https://")}
+              alt={day.day.conditionText}
+              sx={{ width: 36, height: 36, mx: 1.5, flexShrink: 0 }}
+            />
+
+            <Typography
+              sx={{
+                color: theme.textMuted, fontSize: "0.78rem", flex: 1,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}
+            >
+              {day.day.conditionText}
+            </Typography>
+
+            <Typography sx={{ color: theme.textMuted, fontSize: "0.75rem", mr: 2, flexShrink: 0 }}>
+              💨 {Math.round(day.day.maxwind_kph)}
+            </Typography>
+
+            <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0, alignItems: "baseline" }}>
+              <Typography sx={{ color: theme.text, fontSize: "0.95rem", fontWeight: 600 }}>
+                {Math.round(day.day.maxtemp_c)}°
               </Typography>
-              <img src={day.day.condition.icon} alt={day.day.condition.text} />
-              <Typography>
-                Máx: {day.day.maxtemp_c} ºC
+              <Typography sx={{ color: theme.textMuted, fontSize: "0.82rem" }}>
+                / {Math.round(day.day.mintemp_c)}°
               </Typography>
-              <Typography>
-                Viento: {day.day.maxwind_kph} km/h {windDirection.icon} {windDirection.text}
-              </Typography>
-              <Typography>
-                Condición: {day.day.conditionText}
-              </Typography>
-            </CardContent>
-          </Card>
-        );
-      })}
+            </Box>
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 }
