@@ -40,6 +40,19 @@ export default function App() {
     return () => window.removeEventListener("storage", sync);
   }, []);
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setGeoLoading(false);
+        fetchWeather(`${coords.latitude},${coords.longitude}`);
+      },
+      () => setGeoLoading(false),
+      { timeout: 10000 }
+    );
+  }, []);
+
   const fetchWeather = async (query) => {
     setLoading(true);
     setError({ error: false, message: "" });
