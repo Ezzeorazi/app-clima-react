@@ -193,7 +193,21 @@ export default function App() {
           {/* Footer */}
           <Box sx={{ mt: 5, textAlign: "center" }}>
             <Typography sx={{ color: theme.textMuted, fontSize: "0.72rem", letterSpacing: "0.06em" }}>
-              © 2024 Ezequiel Orazi
+              © {new Date().getFullYear()} · Desarrollado por{" "}
+              <Box
+                component="a"
+                href="https://ezequiel-orazi.online"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: theme.accent,
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  "&:hover": { textDecoration: "underline" },
+                }}
+              >
+                Ezequiel Orazi
+              </Box>
             </Typography>
           </Box>
         </Container>
