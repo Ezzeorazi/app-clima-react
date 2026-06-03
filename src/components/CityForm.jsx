@@ -11,7 +11,9 @@ export default function CityForm({ city, setCity, onSubmit, loading, error, onGe
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [noResults, setNoResults] = useState(false);
   const debounceRef = useRef(null);
+  const abortRef = useRef(null);
   const wrapperRef = useRef(null);
 
   const t = theme || {
@@ -43,32 +45,42 @@ export default function CityForm({ city, setCity, onSubmit, loading, error, onGe
     clearTimeout(debounceRef.current);
     if (val.trim().length < 2) {
       setSuggestions([]);
+      setNoResults(false);
       setShowSuggestions(false);
       return;
     }
 
     debounceRef.current = setTimeout(async () => {
+      // Cancela la request anterior si todavía está en vuelo
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+
       setSearchLoading(true);
       try {
-        const res = await fetch(`${SEARCH_API}${encodeURIComponent(val)}`);
+        const res = await fetch(`${SEARCH_API}${encodeURIComponent(val)}`, {
+          signal: abortRef.current.signal,
+        });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setSuggestions(data.slice(0, 5));
+          setNoResults(false);
           setShowSuggestions(true);
         } else {
           setSuggestions([]);
-          setShowSuggestions(false);
+          setNoResults(true);
+          setShowSuggestions(true);
         }
-      } catch {
-        setSuggestions([]);
+      } catch (err) {
+        if (err.name !== "AbortError") setSuggestions([]);
       } finally {
         setSearchLoading(false);
       }
-    }, 300);
+    }, 350);
   };
 
   const handleSelectSuggestion = (suggestion) => {
     setShowSuggestions(false);
+    setNoResults(false);
     setSuggestions([]);
     // Usamos lat,lon para búsqueda exacta sin ambigüedad
     setCity(suggestion.name);
@@ -78,6 +90,7 @@ export default function CityForm({ city, setCity, onSubmit, loading, error, onGe
   const handleSubmit = (e) => {
     e.preventDefault();
     setShowSuggestions(false);
+    setNoResults(false);
     onSubmit(e);
   };
 
@@ -171,7 +184,7 @@ export default function CityForm({ city, setCity, onSubmit, loading, error, onGe
       </Box>
 
       {/* Suggestions dropdown */}
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (
         <Box sx={{
           ...glassCard(t),
           position: "absolute",
@@ -183,33 +196,47 @@ export default function CityForm({ city, setCity, onSubmit, loading, error, onGe
           overflow: "hidden",
           py: 0.5,
         }}>
-          {suggestions.map((s, i) => (
-            <Box
-              key={s.id}
-              onClick={() => handleSelectSuggestion(s)}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                px: 2,
-                py: 1.2,
-                cursor: "pointer",
-                borderBottom: i < suggestions.length - 1 ? `1px solid ${t.divider}` : "none",
-                transition: "background 0.15s",
-                "&:hover": { background: t.accentBg },
-              }}
-            >
-              <LocationOnIcon sx={{ fontSize: 16, color: t.accent, flexShrink: 0 }} />
+          {noResults && suggestions.length === 0 ? (
+            <Box sx={{ px: 2.5, py: 1.8, display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Typography sx={{ fontSize: "1rem" }}>🔍</Typography>
               <Box>
-                <Typography sx={{ color: t.text, fontSize: "0.88rem", fontWeight: 500, lineHeight: 1.2 }}>
-                  {s.name}
+                <Typography sx={{ color: t.text, fontSize: "0.85rem", fontWeight: 500 }}>
+                  Sin resultados
                 </Typography>
                 <Typography sx={{ color: t.textMuted, fontSize: "0.72rem" }}>
-                  {s.region && `${s.region}, `}{s.country}
+                  Probá con el nombre de la ciudad principal (ej: "Ushuaia" en vez de "Tierra del Fuego")
                 </Typography>
               </Box>
             </Box>
-          ))}
+          ) : (
+            suggestions.map((s, i) => (
+              <Box
+                key={s.id}
+                onClick={() => handleSelectSuggestion(s)}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.2,
+                  cursor: "pointer",
+                  borderBottom: i < suggestions.length - 1 ? `1px solid ${t.divider}` : "none",
+                  transition: "background 0.15s",
+                  "&:hover": { background: t.accentBg },
+                }}
+              >
+                <LocationOnIcon sx={{ fontSize: 16, color: t.accent, flexShrink: 0 }} />
+                <Box>
+                  <Typography sx={{ color: t.text, fontSize: "0.88rem", fontWeight: 500, lineHeight: 1.2 }}>
+                    {s.name}
+                  </Typography>
+                  <Typography sx={{ color: t.textMuted, fontSize: "0.72rem" }}>
+                    {s.region && `${s.region}, `}{s.country}
+                  </Typography>
+                </Box>
+              </Box>
+            ))
+          )}
         </Box>
       )}
     </Box>
