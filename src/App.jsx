@@ -12,6 +12,18 @@ import { getWeatherTheme, themes } from "./utils/weatherTheme";
 
 const API_WEATHER = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_API_KEY}&q=`;
 
+const ERROR_TRANSLATIONS = {
+  "No matching location found.": "No se encontró la ciudad. Probá con el nombre completo o seleccioná una sugerencia.",
+  "Parameter q is missing.": "Ingresá el nombre de una ciudad.",
+  "API key not provided.": "Error de configuración: clave de API faltante.",
+  "API key has been disabled.": "La clave de API está deshabilitada.",
+  "API key has exceeded calls per month quota.": "Se superó el límite mensual de la API.",
+};
+function translateApiError(msg) {
+  if (!msg) return null;
+  return ERROR_TRANSLATIONS[msg] || msg;
+}
+
 export default function App() {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,7 +71,7 @@ export default function App() {
     try {
       const res = await fetch(`${API_WEATHER}${encodeURIComponent(query)}&lang=es&days=7`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || `Error ${res.status}`);
+      if (!res.ok) throw new Error(translateApiError(data.error?.message) || `Error ${res.status}`);
 
       setWeather({
         city: data.location.name,
@@ -114,8 +126,9 @@ export default function App() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    if (!city.trim()) { setError({ error: true, message: "El campo es obligatorio" }); return; }
-    fetchWeather(city);
+    const query = e._query || city;
+    if (!query.trim()) { setError({ error: true, message: "El campo es obligatorio" }); return; }
+    fetchWeather(query);
   };
 
   const onGeolocate = () => {
